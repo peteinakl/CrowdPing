@@ -5,6 +5,7 @@ import { Card } from '../components/common/Card';
 import { Button, buttonClasses } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/Dialog';
 import { FormActionBar } from '../components/common/FormActionBar';
+import { YourPollsLink } from '../components/common/YourPollsLink';
 import { PollStatusBadge } from '../components/dashboard/PollStatusBadge';
 import { LivePulse } from '../components/common/LivePulse';
 import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
@@ -89,7 +90,7 @@ export function PollManagePage() {
 
   if (error || !poll || !id) {
     return (
-      <AppShell>
+      <AppShell action={<YourPollsLink />}>
         <p role="alert" className="text-red-700">
           {error ?? 'Poll not found.'}
         </p>
@@ -190,7 +191,7 @@ export function PollManagePage() {
         };
 
   return (
-    <AppShell>
+    <AppShell action={<YourPollsLink />}>
       <div className="mb-6 flex items-center gap-3">
         <h1 className="font-display text-3xl font-bold tracking-tight text-ink-950">Manage poll</h1>
         <PollStatusBadge status={poll.status} />

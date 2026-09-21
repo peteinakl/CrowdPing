@@ -3,8 +3,8 @@ import { Link } from 'react-router';
 import { Logo } from '../components/common/Logo';
 import { buttonClasses } from '../components/common/Button';
 
-const ReturningOrganiserNav = lazy(() =>
-  import('../components/common/ReturningOrganiserNav').then((m) => ({ default: m.ReturningOrganiserNav })),
+const YourPollsLink = lazy(() =>
+  import('../components/common/YourPollsLink').then((m) => ({ default: m.YourPollsLink })),
 );
 
 export function LandingPage() {
@@ -13,7 +13,7 @@ export function LandingPage() {
       <header className="flex items-center justify-between px-4 py-6 sm:px-6">
         <Logo className="h-8 w-auto" />
         <Suspense fallback={null}>
-          <ReturningOrganiserNav />
+          <YourPollsLink />
         </Suspense>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 text-center">

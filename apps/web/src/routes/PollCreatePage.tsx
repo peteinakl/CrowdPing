@@ -4,6 +4,7 @@ import { AppShell } from '../components/common/AppShell';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { FormActionBar } from '../components/common/FormActionBar';
+import { YourPollsLink } from '../components/common/YourPollsLink';
 import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
 import { ExpirySelector } from '../components/create/ExpirySelector';
 import { ResultsTimingSelector } from '../components/create/ResultsTimingSelector';
@@ -53,7 +54,7 @@ export function PollCreatePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell action={<YourPollsLink />}>
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_320px]">
         <div className="space-y-8">
           <div>
