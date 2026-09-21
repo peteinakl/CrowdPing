@@ -43,7 +43,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <ToastPrimitive.Title className="text-sm font-semibold">{message.title}</ToastPrimitive.Title>
           </ToastPrimitive.Root>
         ))}
-        <ToastPrimitive.Viewport className="fixed bottom-4 right-4 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none" />
+        {/* bottom-24 (not bottom-4) so a toast never lands on top of FormActionBar's fixed
+            bottom bar (~80px tall) on pages that have one — a real overlap confirmed visually,
+            not just theoretical. Harmless extra clearance on pages without one. */}
+        <ToastPrimitive.Viewport className="fixed bottom-24 right-4 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none" />
       </ToastPrimitive.Provider>
     </ToastContext.Provider>
   );

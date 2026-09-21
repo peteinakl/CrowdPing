@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AppShell } from '../components/common/AppShell';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
+import { FormActionBar } from '../components/common/FormActionBar';
 import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
 import { ExpirySelector } from '../components/create/ExpirySelector';
 import { ResultsTimingSelector } from '../components/create/ResultsTimingSelector';
@@ -21,12 +22,14 @@ export function PollCreatePage() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>('after_vote');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement | null>(null);
 
   async function handleCreateDraft() {
     const questionError = validateQuestion(question);
     const choicesError = validateChoiceList(choices);
     if (questionError || choicesError) {
       setError(questionError ?? choicesError);
+      requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
       return;
     }
     setBusy(true);
@@ -43,6 +46,7 @@ export function PollCreatePage() {
       navigate(`/polls/${id}`);
     } catch {
       setError('Could not save your draft. Please try again.');
+      requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     } finally {
       setBusy(false);
     }
@@ -57,7 +61,7 @@ export function PollCreatePage() {
             <p className="mt-1 text-ink-500">One question, up to eight answers.</p>
           </div>
 
-          <Card className="space-y-6">
+          <Card className="mb-28 space-y-6">
             <div>
               <label htmlFor="question" className="mb-1 block text-sm font-semibold text-ink-950">
                 Question
@@ -81,14 +85,10 @@ export function PollCreatePage() {
             <ResultsTimingSelector value={resultsMode} onChange={setResultsMode} />
 
             {error && (
-              <p role="alert" className="text-sm font-medium text-red-700">
+              <p ref={errorRef} role="alert" className="text-sm font-medium text-red-700">
                 {error}
               </p>
             )}
-
-            <Button onClick={handleCreateDraft} disabled={busy} size="lg" className="w-full sm:w-auto">
-              {busy ? 'Saving…' : 'Save draft'}
-            </Button>
           </Card>
         </div>
 
@@ -97,6 +97,12 @@ export function PollCreatePage() {
           <MobilePreviewPane question={question} choices={choices} />
         </div>
       </div>
+
+      <FormActionBar>
+        <Button onClick={handleCreateDraft} disabled={busy} size="lg" className="w-full sm:w-auto">
+          {busy ? 'Saving…' : 'Save draft'}
+        </Button>
+      </FormActionBar>
     </AppShell>
   );
 }

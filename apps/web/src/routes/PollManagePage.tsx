@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AppShell } from '../components/common/AppShell';
 import { Card } from '../components/common/Card';
 import { Button, buttonClasses } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/Dialog';
+import { FormActionBar } from '../components/common/FormActionBar';
 import { PollStatusBadge } from '../components/dashboard/PollStatusBadge';
 import { LivePulse } from '../components/common/LivePulse';
 import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
@@ -41,10 +42,16 @@ export function PollManagePage() {
   const [expiryDays, setExpiryDays] = useState(7);
   const [resultsMode, setResultsMode] = useState<ResultsMode>('after_vote');
   const [saving, setSaving] = useState(false);
+  // Separate from `error` (page-load failure, gates the whole page below) — a bad draft save
+  // must only replace the inline message in the form, never the entire page. These were
+  // previously the same state, which meant a validation error (e.g. empty question) collapsed
+  // the whole page down to a bare error line, losing the form entirely.
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -94,11 +101,12 @@ export function PollManagePage() {
     const questionError = validateQuestion(question);
     const choicesError = validateChoiceList(choices);
     if (questionError || choicesError) {
-      setError(questionError ?? choicesError);
+      setFormError(questionError ?? choicesError);
+      requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
       return;
     }
     setSaving(true);
-    setError(null);
+    setFormError(null);
     try {
       const trimmedChoices = choices.map((c) => c.trim()).filter((c) => c.length > 0);
       await apiClient.organiser.updateDraft(id as string, {
@@ -110,7 +118,8 @@ export function PollManagePage() {
       showToast('Saved. Still yours to change.');
       await load();
     } catch {
-      setError('Could not save changes.');
+      setFormError('Could not save changes.');
+      requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     } finally {
       setSaving(false);
     }
@@ -188,30 +197,32 @@ export function PollManagePage() {
       </div>
 
       {poll.status === 'draft' && (
-        <Card className="mb-8 space-y-6">
-          <div>
-            <label htmlFor="question" className="mb-1 block text-sm font-semibold text-ink-950">
-              Question
-            </label>
-            <textarea
-              id="question"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows={2}
-              className="w-full rounded-[var(--radius-md)] border-2 border-ink-100 px-4 py-3 text-base focus:border-accent-600 focus:outline-none"
-            />
-          </div>
-          <ChoiceListEditor choices={choices} onChange={setChoices} />
-          <ExpirySelector value={expiryDays} onChange={setExpiryDays} />
-          <ResultsTimingSelector value={resultsMode} onChange={setResultsMode} />
+        <>
+          <Card className="mb-28 space-y-6">
+            <div>
+              <label htmlFor="question" className="mb-1 block text-sm font-semibold text-ink-950">
+                Question
+              </label>
+              <textarea
+                id="question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                rows={2}
+                className="w-full rounded-[var(--radius-md)] border-2 border-ink-100 px-4 py-3 text-base focus:border-accent-600 focus:outline-none"
+              />
+            </div>
+            <ChoiceListEditor choices={choices} onChange={setChoices} />
+            <ExpirySelector value={expiryDays} onChange={setExpiryDays} />
+            <ResultsTimingSelector value={resultsMode} onChange={setResultsMode} />
 
-          {error && (
-            <p role="alert" className="text-sm font-medium text-red-700">
-              {error}
-            </p>
-          )}
+            {formError && (
+              <p ref={errorRef} role="alert" className="text-sm font-medium text-red-700">
+                {formError}
+              </p>
+            )}
+          </Card>
 
-          <div className="flex flex-wrap gap-3">
+          <FormActionBar>
             <Button variant="secondary" onClick={handleSaveDraft} disabled={saving}>
               {saving ? 'Saving…' : 'Save draft'}
             </Button>
@@ -219,8 +230,8 @@ export function PollManagePage() {
             <Button variant="danger" onClick={() => setConfirmDelete(true)}>
               Delete draft
             </Button>
-          </div>
-        </Card>
+          </FormActionBar>
+        </>
       )}
 
       {poll.status !== 'draft' && (
