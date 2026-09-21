@@ -1,0 +1,27 @@
+# CrowdPing — llms.txt
+# https://crowdping.aiinnovisory.com
+# Last updated: 2026-09-22
+
+> CrowdPing is a free live audience-polling tool. An organiser asks a question, projects a
+> QR code, and the room answers instantly — no app to download and no sign-up for
+> participants. Results appear as live percentage bars as votes come in. Built for workshops,
+> talks, classrooms, and any live event where you want an honest, real-time read on what a
+> room actually thinks.
+
+## Maker
+Built by Peter Mangin, founder of AI Innovisory (https://aiinnovisory.com), an Auckland-based
+AI advisory firm. CrowdPing grew out of running AI workshops for 400+ New Zealand
+organisations and needing a fast, frictionless way to poll a room live.
+
+## How it works
+1. Sign in and create a poll: one question, up to eight answers.
+2. Publish it — get a QR code and a short link.
+3. Project the QR code; the audience scans it and votes, no account needed.
+4. Watch results update live as percentages, without exposing raw vote counts to the audience.
+
+## Key page
+- Home / create a poll: https://crowdping.aiinnovisory.com/
+
+## Contact
+Built by AI Innovisory — hello@aiinnovisory.com
+Privacy policy: https://aiinnovisory.com/privacy

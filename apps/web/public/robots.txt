@@ -1,4 +1,50 @@
+# Only / (the landing page) is meant to be crawled — everything else is either a private
+# organiser page or an individual poll/ballot page with no SEO or GEO value. Named AI-crawler
+# blocks below repeat the same Allow/Disallow rules explicitly (per robots.txt semantics, a
+# named User-agent block does not inherit from User-agent: *) rather than relying only on the
+# wildcard, matching aiinnovisory.com's convention of welcoming these crawlers by name.
+
 User-agent: *
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/
+
+User-agent: OAI-SearchBot
 Allow: /
 Disallow: /p/
 Disallow: /polls/
