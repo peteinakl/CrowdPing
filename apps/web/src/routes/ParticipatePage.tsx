@@ -64,23 +64,28 @@ export function ParticipatePage() {
         <h1 className="font-display text-2xl font-bold tracking-tight text-ink-950 sm:text-[1.75rem]">
           {poll.question}
         </h1>
-        <BallotForm code={safeCode} poll={poll} myVote={myVote.vote} onVoted={handleVoted} />
-
-        {myVote.vote && (
-          <div className="space-y-3 border-t border-ink-100 pt-6">
-            {pendingResults ? (
-              <p className="text-sm text-ink-500">Results will be available when voting closes.</p>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-sm font-semibold tracking-tight text-ink-950">Results</h2>
-                  <StaleBadge stale={resultsPolling.stale} />
-                </div>
-                <ResultsBarChart options={poll.options} percentages={resultsPolling.results?.options ?? null} />
-                <LastUpdatedIndicator lastUpdated={resultsPolling.lastUpdated} />
-              </>
-            )}
-          </div>
+        {myVote.vote ? (
+          <>
+            <div className="space-y-3">
+              {pendingResults ? (
+                <p className="text-sm text-ink-500">Results will be available when voting closes.</p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display text-sm font-semibold tracking-tight text-ink-950">Results</h2>
+                    <StaleBadge stale={resultsPolling.stale} />
+                  </div>
+                  <ResultsBarChart options={poll.options} percentages={resultsPolling.results?.options ?? null} />
+                  <LastUpdatedIndicator lastUpdated={resultsPolling.lastUpdated} />
+                </>
+              )}
+            </div>
+            <div className="border-t border-ink-100 pt-6">
+              <BallotForm code={safeCode} poll={poll} myVote={myVote.vote} onVoted={handleVoted} />
+            </div>
+          </>
+        ) : (
+          <BallotForm code={safeCode} poll={poll} myVote={myVote.vote} onVoted={handleVoted} />
         )}
       </div>
     );
