@@ -15,7 +15,7 @@ export function PollCreatePage() {
   const navigate = useNavigate();
   const [question, setQuestion] = useState('');
   const [choices, setChoices] = useState(['', '']);
-  const [expiryDays, setExpiryDays] = useState(7);
+  const [expiryDays, setExpiryDays] = useState(1);
   const [resultsMode, setResultsMode] = useState<ResultsMode>('after_vote');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

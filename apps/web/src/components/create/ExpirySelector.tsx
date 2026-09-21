@@ -1,4 +1,4 @@
-const OPTIONS = [7, 14, 30];
+const OPTIONS = [1, 7, 14, 30];
 
 interface ExpirySelectorProps {
   value: number;
@@ -19,7 +19,7 @@ export function ExpirySelector({ value, onChange }: ExpirySelectorProps) {
       >
         {OPTIONS.map((days) => (
           <option key={days} value={days}>
-            {days} days
+            {days === 1 ? '1 day' : `${days} days`}
           </option>
         ))}
       </select>
