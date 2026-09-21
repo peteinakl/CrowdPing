@@ -34,31 +34,45 @@ For whichever project you're deploying:
    `docs/DEVIATIONS.md` for why this matters here specifically (a real vulnerability was found
    and fixed this way during the build).
 
-## 2. Cloudflare Pages
+## 2. Cloudflare: Worker with static assets
 
-1. Connect the repo (or push via `wrangler pages deploy`). Project root: `apps/web`. Build
-   command: `npm run build` (run from `apps/web`, or `npm run build --workspace apps/web` from
-   the repo root if Cloudflare builds from the monorepo root — set the Pages project's "Root
-   directory" to `apps/web` either way, so `functions/api/[[path]].ts` is picked up as a Pages
-   Function and `_redirects`/`_headers` are served from `public/`). Output directory: `dist`.
-2. Environment variables (Pages project settings, not `wrangler.toml`'s `[vars]` — those are
-   local-dev-only defaults): `APP_BASE_URL`, `VITE_APP_BASE_URL` (same value), `VITE_SUPABASE_URL`,
-   `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_FUNCTIONS_BASE_URL`
-   (`https://<project-ref>.supabase.co/functions/v1`), `ALLOWED_APP_ORIGINS` (your Pages domain).
-3. Bind the production domain (Pages project → Custom domains). Until a real domain exists,
-   the `*.pages.dev` subdomain Cloudflare assigns works for staging verification.
-4. Deploy, then confirm:
-   - `/`, `/dashboard`, `/p/<code>`, `/polls/<id>/present` all load the SPA (deep-link
-     fallback via `_redirects`) — not the local `wrangler pages dev` false-positive case
-     documented in `docs/ENVIRONMENT.md`; a real Pages deployment applies the `_redirects` rule
-     correctly.
+Deployed as a Worker with a static-assets binding (`apps/web/worker.ts` + `apps/web/wrangler.toml`),
+not classic Cloudflare Pages. This is a mid-build switch — see `docs/DEVIATIONS.md` for why: the
+project was originally connected as a Git-integrated Pages project (`wrangler pages deploy`), but
+its deploy step kept failing with a Pages-Projects-API authentication error (code 10000) regardless
+of how the `CLOUDFLARE_API_TOKEN` was scoped. Switching the deploy command to plain `wrangler
+deploy` — which only needs the much more commonly-granted "Workers Scripts: Edit" permission —
+resolved it. Functionally equivalent: `worker.ts`'s `fetch` handler proxies `/api/*` exactly like
+the old `functions/api/[[path]].ts` Pages Function did (ported verbatim), and falls through to
+`env.ASSETS.fetch(request)` for everything else, with SPA deep-link fallback handled by
+`wrangler.toml`'s `[assets] not_found_handling = "single-page-application"` (the old
+`public/_redirects` rule is gone — Cloudflare's asset engine now flags it as a redundant/looping
+rule alongside that config key, and rejects it).
+
+1. In the Cloudflare dashboard, on the connected Git project's **Settings → Build**: Root directory
+   = `apps/web`, Build command = `npm run build`, **Deploy command = `npx wrangler deploy`** (not
+   `wrangler pages deploy` — that targets the old Pages Projects API and will fail/warn on this
+   project's current config).
+2. `CLOUDFLARE_API_TOKEN` (project's Environment variables, used by the deploy command itself):
+   a token scoped with at least "Workers Scripts: Edit" — the dashboard's "Edit Cloudflare
+   Workers" token template covers this.
+3. Environment variables for the app itself (also project Environment variables, not
+   `wrangler.toml`'s `[vars]` — those are local-dev-only defaults): `APP_BASE_URL`,
+   `VITE_APP_BASE_URL` (same value), `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
+   `SUPABASE_FUNCTIONS_BASE_URL` (`https://<project-ref>.supabase.co/functions/v1`),
+   `ALLOWED_APP_ORIGINS` (your deployed domain).
+4. Bind the production domain (project → Custom domains/Triggers). Until a real domain exists,
+   the `*.workers.dev` subdomain Cloudflare assigns works for staging verification.
+5. Deploy, then confirm:
+   - `/`, `/dashboard`, `/p/<code>`, `/polls/<id>/present` all load the SPA (deep-link fallback
+     via `not_found_handling`).
    - `/api/polls/doesnotexist` returns a JSON 404, not HTML.
    - `curl -I` on any `/api/*` route shows `Cache-Control: no-store`.
-5. If step 4's SPA fallback somehow doesn't work on the real deployment either, the documented
-   fallback (per Cloudflare's current Workers-assets convergence) is switching
-   `apps/web/wrangler.toml` to the `assets.not_found_handling = "single-page-application"`
-   config key instead of relying on `_redirects` — see the GitHub issue referenced in
-   `docs/ENVIRONMENT.md`'s local-dev note before doing this, since it may not be needed.
+6. Local dev/testing of this exact worker (not just `vite dev`): `cd apps/web && npm run build &&
+   npx wrangler dev --port 8788` — serves the built `dist/` plus the real proxy, both verified
+   locally (SPA fallback, `/api/*` 404 shape, `Cache-Control: no-store`) before this doc was
+   written. Note this serves the last `npm run build` output, not live-reloading source — use
+   plain `vite dev` at `:5173` for routine frontend iteration instead.
 
 ## 3. DNS / domain migration (if changing hosts later)
 

@@ -1,8 +1,13 @@
 name = "crowdping-web"
 compatibility_date = "2026-01-01"
-pages_build_output_dir = "dist"
+main = "worker.ts"
 
-# Local dev only. Production values are set in the Cloudflare Pages dashboard
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Local dev only. Production values are set in the Cloudflare dashboard's project settings
 # (see docs/DEPLOYMENT.md) — never commit real upstream URLs or origins here beyond
 # the local defaults.
 [vars]

@@ -1,19 +1,17 @@
-// Cloudflare Pages Functions catch-all proxy for /api/*.
+// Cloudflare Worker entry point: serves the built SPA as static assets and proxies /api/*.
 //
-// Thin, fixed-upstream transport only: no poll business logic lives here.
-// Rewrites browser-facing /api/* routes onto the Supabase Edge Function
-// upstream, forwards the first-party voter cookie / auth / content headers,
-// and returns the upstream Set-Cookie verbatim so the voter credential stays
-// first-party and HttpOnly. See CrowdPing_Product_Requirements.md §6.
+// Replaces the earlier Pages Functions catch-all (functions/api/[[path]].ts) now that this
+// project deploys via `wrangler deploy` (Workers + static assets) instead of
+// `wrangler pages deploy` — the classic Pages Projects API kept rejecting the deploy's API
+// token regardless of scope, while a plain Worker deploy only needs the much more commonly
+// granted "Workers Scripts: Edit" permission. Proxy logic itself is unchanged: thin,
+// fixed-upstream transport only, no poll business logic lives here. See
+// CrowdPing_Product_Requirements.md §6.
 
 interface Env {
+  ASSETS: { fetch(request: Request): Promise<Response> };
   SUPABASE_FUNCTIONS_BASE_URL: string;
   ALLOWED_APP_ORIGINS: string;
-}
-
-interface RequestContext {
-  request: Request;
-  env: Env;
 }
 
 const MAX_BODY_BYTES = 16 * 1024;
@@ -50,9 +48,8 @@ function resolveUpstream(pathname: string, functionsBaseUrl: string): string | n
   return null;
 }
 
-export const onRequest = async ({ request, env }: RequestContext): Promise<Response> => {
+async function handleApi(request: Request, env: Env, url: URL): Promise<Response> {
   const start = Date.now();
-  const url = new URL(request.url);
 
   const upstreamPath = resolveUpstream(url.pathname, env.SUPABASE_FUNCTIONS_BASE_URL);
   if (!upstreamPath) {
@@ -112,4 +109,15 @@ export const onRequest = async ({ request, env }: RequestContext): Promise<Respo
     status: upstreamResponse.status,
     headers: responseHeaders,
   });
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      return handleApi(request, env, url);
+    }
+    // Static assets + SPA fallback (see [assets].not_found_handling in wrangler.toml).
+    return env.ASSETS.fetch(request);
+  },
 };

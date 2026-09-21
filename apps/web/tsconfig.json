@@ -5,5 +5,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "functions", "vite.config.ts"]
+  "include": ["src", "worker.ts", "vite.config.ts"]
 }

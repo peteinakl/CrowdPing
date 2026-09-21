@@ -205,3 +205,33 @@ that volume is itself a scaling risk the PRD doesn't reconcile. Current limits a
 above the per-client rate the 2-second cadence implies, as a correctness backstop rather than a
 tuned production limit; an in-Edge-Function in-memory token bucket is the documented follow-up
 if load testing (deferred — see `docs/BUILD_REPORT.md`) shows contention.
+
+## Deployment: Worker + static assets, not classic Cloudflare Pages
+
+The original plan (and `docs/DEPLOYMENT.md`'s first draft) deployed via Cloudflare Pages:
+`apps/web/functions/api/[[path]].ts` as a Pages Function, `wrangler.toml`'s
+`pages_build_output_dir`, `_redirects` for SPA fallback. During actual first deployment (a
+Git-connected Cloudflare project, outside this session's own access — no Cloudflare auth was
+ever available here), the configured `wrangler pages deploy` deploy step failed repeatedly with
+a Pages-Projects-API authentication error (code 10000), reproducible across multiple freshly
+created API tokens (custom-scoped, and the dashboard's own "Edit Cloudflare Workers" template) —
+the token authenticated fine for identity/whoami calls but was consistently rejected specifically
+calling `/accounts/.../pages/projects/...`.
+
+Rather than continue debugging that specific endpoint blind (each attempt cost a full CI cycle),
+switched to deploying as a plain Cloudflare Worker with a static-assets binding: `apps/web/worker.ts`
+(the same proxy logic from the old Pages Function, ported verbatim) + `wrangler.toml`'s `main` +
+`[assets]` block, deployed via `npx wrangler deploy` instead of `wrangler pages deploy`. This only
+needs the "Workers Scripts: Edit" permission — a much more reliably-granted scope than whatever
+the Pages Projects API specifically required and never got. Verified locally end-to-end (`wrangler
+dev`, both the SPA fallback and a real round trip through the proxy to the local Supabase
+function) before pushing. `functions/api/[[path]].ts` and `public/_redirects` were deleted —
+superseded, and in `_redirects`' case actively flagged by Cloudflare's asset engine as a
+redundant/looping rule once `[assets].not_found_handling = "single-page-application"` is set.
+
+One open question this doesn't resolve: whether `wrangler deploy` against a project Cloudflare's
+dashboard still shows as a "Pages project" (by name) correctly updates that same resource, or
+produces a second, separate Worker resource — wrangler itself warns about this
+("Proceeding will likely produce unwanted results") when it detects the mismatch. Confirm which
+happened after the first successful deploy, and reconcile/rename in the dashboard if it's the
+latter.
