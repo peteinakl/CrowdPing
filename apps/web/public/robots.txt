@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /p/
+Disallow: /polls/
+Disallow: /dashboard
+Disallow: /sign-in
+Disallow: /auth/

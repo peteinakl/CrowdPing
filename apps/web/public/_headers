@@ -1,4 +1,16 @@
 /*
   Referrer-Policy: no-referrer
-  X-Robots-Tag: noindex
   X-Content-Type-Options: nosniff
+
+# Everything except / (the landing page) is noindex: private organiser pages, auth pages, and
+# individual poll/ballot pages have no SEO value and shouldn't show up in search results.
+/sign-in
+  X-Robots-Tag: noindex
+/auth/callback
+  X-Robots-Tag: noindex
+/dashboard
+  X-Robots-Tag: noindex
+/polls/*
+  X-Robots-Tag: noindex
+/p/*
+  X-Robots-Tag: noindex
