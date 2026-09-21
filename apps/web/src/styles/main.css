@@ -1,24 +1,49 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/jetbrains-mono";
 
+/*
+ * Three type roles, each doing one job (not decoration — see docs/DEVIATIONS.md-adjacent
+ * reasoning, this mirrors the same "one job per element" discipline):
+ *   --font-sans   body copy, UI chrome — what a person reads and clicks.
+ *   --font-display headings, questions — Inter Tight's tighter tracking reads more
+ *                 confident/designed at large sizes than regular Inter.
+ *   --font-mono   anything the system is measuring live — percentages, poll codes,
+ *                 timestamps — a small, deliberate signal that this number is being
+ *                 counted right now, not authored by a person.
+ */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight Variable", "Inter Variable", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
 
   --color-ink-950: #151417;
   --color-ink-700: #3a383d;
+  --color-ink-600: #55535a;
   --color-ink-500: #6b6970;
   --color-ink-300: #b7b5ba;
   --color-ink-100: #efeef1;
   --color-paper: #ffffff;
+  --color-paper-tint: #faf9f8;
 
   --color-accent-700: #d31f00;
   --color-accent-600: #fd2801;
   --color-accent-100: #ffe4dc;
+  --color-accent-50: #fff3f0;
 
   --color-success-600: #15803d;
   --color-warning-600: #b45309;
 
-  --radius-lg: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-md: 0.625rem;
+
+  /* Layered "contact + ambient" shadows instead of hairline borders for surface depth. */
+  --shadow-card: 0 1px 2px rgba(21, 20, 23, 0.04), 0 12px 28px -8px rgba(21, 20, 23, 0.10);
+  --shadow-card-hover: 0 2px 4px rgba(21, 20, 23, 0.05), 0 18px 36px -8px rgba(21, 20, 23, 0.14);
+  --shadow-raised: 0 1px 2px rgba(21, 20, 23, 0.06), 0 4px 10px -2px rgba(21, 20, 23, 0.10);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html {
@@ -26,8 +51,81 @@ html {
 }
 
 body {
-  background-color: var(--color-paper);
+  background-color: var(--color-paper-tint);
   color: var(--color-ink-950);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Native form controls (the results-timing radios) default to the browser's blue without
+     this — caught by actually looking at a screenshot, not assumed. */
+  accent-color: var(--color-accent-600);
+}
+
+/* The live-pulse signature (PollStatusBadge, results headings) — one motion motif, used
+   sparingly, echoing the radiating-arc mark in the brand logo. Inert under reduced-motion. */
+@keyframes ping-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* The presentation join screen's ambient broadcast signature. The elements these animate are
+   already sized to 130% of the QR (see PresentationJoinView) — a large, unambiguous gap
+   outside the QR's quiet zone at every point in the cycle. Re-verify with a real decode test
+   after touching either the base size there or the scale range here. */
+@keyframes broadcast-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@keyframes broadcast-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Dialog/Toast enter-exit — Radix drives these via data-state, so they only ever play on a
+   real open/close transition, never on every re-render. Reduced-motion falls back to an
+   instant show via the plain (non motion-safe) opacity keyframes below. */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
 }

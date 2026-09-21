@@ -45,7 +45,15 @@ app.get('/polls', async (c) => {
     .range(from, to);
 
   if (error) throw new ApiError('INTERNAL_ERROR', error.message);
-  return jsonResponse({ polls: data, total: count ?? 0, page, pageSize }, {}, cors);
+  const items = (data ?? []).map((p) => ({
+    id: p.id,
+    question: p.question,
+    status: p.status,
+    responseCount: p.response_count,
+    createdAt: p.created_at,
+  }));
+  const hasMore = from + items.length < (count ?? 0);
+  return jsonResponse({ items, hasMore }, {}, cors);
 });
 
 // POST /organiser-api/polls — create a draft.
@@ -101,7 +109,27 @@ app.get('/polls/:id', async (c) => {
 
   if (error) throw new ApiError('INTERNAL_ERROR', error.message);
   if (!data) throw new ApiError('POLL_NOT_FOUND', 'No such poll');
-  return jsonResponse(data, {}, cors);
+  return jsonResponse(
+    {
+      id: data.id,
+      question: data.question,
+      status: data.status,
+      options: (data.poll_options ?? []).map((o: { id: string; label: string; position: number }) => ({
+        id: o.id,
+        label: o.label,
+        position: o.position,
+      })),
+      participantResultsMode: data.participant_results_mode,
+      expiryDays: data.expiry_days,
+      code: data.public_code,
+      createdAt: data.created_at,
+      publishedAt: data.published_at,
+      closesAt: data.closes_at,
+      closedAt: data.closed_at,
+    },
+    {},
+    cors,
+  );
 });
 
 // PATCH /organiser-api/polls/:id — edit a draft.
@@ -152,7 +180,7 @@ app.post('/polls/:id/publish', async (c) => {
   const { data, error } = await supabase.rpc('publish_poll', { p_poll_id: c.req.param('id') });
   if (error) throw fromPostgresError(error.message);
   const row = Array.isArray(data) ? data[0] : data;
-  return jsonResponse({ publicCode: row.public_code, closesAt: row.closes_at }, {}, cors);
+  return jsonResponse({ code: row.public_code, closesAt: row.closes_at }, {}, cors);
 });
 
 // POST /organiser-api/polls/:id/close
@@ -174,7 +202,21 @@ app.get('/polls/:id/results', async (c) => {
 
   const { data, error } = await supabase.rpc('get_owner_results', { p_poll_id: c.req.param('id') });
   if (error) throw fromPostgresError(error.message);
-  return jsonResponse(data, {}, cors);
+  return jsonResponse(
+    {
+      options: (data.options ?? []).map((o: { id: string; label: string; count: number; percentage: number }) => ({
+        optionId: o.id,
+        label: o.label,
+        count: o.count,
+        percentage: o.percentage,
+      })),
+      totalResponses: data.total_responses,
+      status: data.status,
+      isFinal: data.status === 'closed',
+    },
+    {},
+    cors,
+  );
 });
 
 app.onError((err, c) => {

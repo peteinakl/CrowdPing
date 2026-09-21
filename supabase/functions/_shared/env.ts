@@ -6,6 +6,7 @@
 export interface BackendEnv {
   supabaseUrl: string;
   supabaseAnonKey: string;
+  supabaseServiceRoleKey: string;
   allowedOrigins: string[];
   voterCookieSigningKeys: string[]; // current key first, for rotation
   voterKeyDerivationKey: string;
@@ -57,6 +58,7 @@ export function loadEnv(): BackendEnv {
   cached = {
     supabaseUrl: required('SUPABASE_URL'),
     supabaseAnonKey: required('SUPABASE_ANON_KEY'),
+    supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
     allowedOrigins,
     voterCookieSigningKeys,
     voterKeyDerivationKey: required('VOTER_KEY_DERIVATION_KEY'),

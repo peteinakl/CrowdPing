@@ -10,6 +10,7 @@ export type ErrorCode =
   | 'POLL_CLOSED'
   | 'INVALID_OPTION'
   | 'ILLEGAL_TRANSITION'
+  | 'REVISION_CONFLICT'
   | 'ORIGIN_FORBIDDEN'
   | 'RATE_LIMITED'
   | 'NO_SESSION'
@@ -22,6 +23,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   POLL_CLOSED: 409,
   INVALID_OPTION: 400,
   ILLEGAL_TRANSITION: 409,
+  REVISION_CONFLICT: 409,
   ORIGIN_FORBIDDEN: 403,
   RATE_LIMITED: 429,
   // Client-flow ordering issue (no voter cookie yet), not a DB-raised code — the client must
@@ -32,11 +34,20 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   INTERNAL_ERROR: 500,
 };
 
+export interface CurrentVote {
+  optionId: string;
+  revision: number;
+}
+
 export class ApiError extends Error {
   readonly code: ErrorCode;
-  constructor(code: ErrorCode, message: string) {
+  readonly current?: CurrentVote | null;
+  readonly retryAfterSeconds?: number;
+  constructor(code: ErrorCode, message: string, extra?: { current?: CurrentVote | null; retryAfterSeconds?: number }) {
     super(message);
     this.code = code;
+    this.current = extra?.current;
+    this.retryAfterSeconds = extra?.retryAfterSeconds;
   }
 }
 
@@ -56,13 +67,21 @@ export function fromPostgresError(pgMessage: string): ApiError {
   return new ApiError('INTERNAL_ERROR', 'Something went wrong. Please try again.');
 }
 
+// Flat shape — matches apps/web/src/lib/types.ts's ApiErrorBody exactly (no `.error` wrapper).
+// apiClient.ts's request() reads `code`/`current`/`retryAfterSeconds` directly off the parsed
+// body, so nesting this under an `error` key would silently make every err.code read undefined.
 export function errorResponse(error: ApiError, corsHeaders: Record<string, string> = {}): Response {
   const status = STATUS_BY_CODE[error.code];
   if (error.code === 'INTERNAL_ERROR') {
     console.error('Unhandled backend error:', error.message);
   }
   return new Response(
-    JSON.stringify({ error: { code: error.code, message: error.message } }),
+    JSON.stringify({
+      code: error.code,
+      message: error.message,
+      ...(error.current !== undefined ? { current: error.current } : {}),
+      ...(error.retryAfterSeconds !== undefined ? { retryAfterSeconds: error.retryAfterSeconds } : {}),
+    }),
     {
       status,
       headers: {

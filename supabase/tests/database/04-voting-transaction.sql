@@ -27,8 +27,13 @@ select id as option_b from public.poll_options where poll_id = :'poll_id' and la
 select create_draft_poll('Other poll?', array['X', 'Y']) as other_poll_id \gset
 select id as foreign_option from public.poll_options where poll_id = :'other_poll_id' limit 1 \gset
 
+-- voter-api calls these via a service-role client, not anon (see
+-- lock_down_voter_rpc_and_internal_tables/lock_down_internal_helpers_and_default_grants:
+-- anon/authenticated EXECUTE on submit_vote et al. is revoked so PostgREST can't be used to
+-- bypass the cookie-derived voter_key_hash). service_role is what actually calls this in
+-- production, so that's what the test simulates too.
 reset role;
-set local role anon;
+set local role service_role;
 
 select is(
   (select status from submit_vote(:'public_code', :'hash1', :'option_a', 0)),
@@ -79,7 +84,7 @@ select set_config('request.jwt.claims', json_build_object('sub', :'owner_id', 'r
 select close_poll(:'poll_id');
 reset role;
 
-set local role anon;
+set local role service_role;
 select throws_ok(
   format($$ select * from submit_vote('%s', '%s', '%s', 0) $$, :'public_code', :'hash3', :'option_a'),
   'POLL_CLOSED: voting has closed',

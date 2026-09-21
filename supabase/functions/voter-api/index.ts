@@ -2,7 +2,7 @@
 // user JWT. All identity comes from the signed cp_voter cookie verified in this function.
 import { Hono, type Context } from 'hono';
 import { loadEnv } from '../_shared/env.ts';
-import { createAnonClient } from '../_shared/dbClients.ts';
+import { createAnonClient, createServiceRoleClient } from '../_shared/dbClients.ts';
 import { assertAllowedOrigin, corsHeaders } from '../_shared/originCheck.ts';
 import { ApiError, errorResponse, fromPostgresError, jsonResponse } from '../_shared/errors.ts';
 import {
@@ -57,15 +57,26 @@ function clientIp(req: Request): string {
 app.get('/polls/:code', async (c) => {
   const env = loadEnv();
   const supabase = createAnonClient(env);
-  const { data, error } = await supabase.rpc('get_public_poll', { p_public_code: c.req.param('code') });
+  const code = c.req.param('code');
+  const { data, error } = await supabase.rpc('get_public_poll', { p_public_code: code });
   if (error) throw fromPostgresError(error.message);
-  return jsonResponse(data, {}, corsHeaders(c.req.raw, env.allowedOrigins));
+  return jsonResponse(
+    {
+      code,
+      question: data.question,
+      options: data.options,
+      status: data.status,
+      participantResultsMode: data.participant_results_mode,
+    },
+    {},
+    corsHeaders(c.req.raw, env.allowedOrigins),
+  );
 });
 
 // POST /voter-api/polls/:code/session — establish/reuse the voter cookie. No vote mutation.
 app.post('/polls/:code/session', async (c) => {
   const env = loadEnv();
-  const supabase = createAnonClient(env);
+  const supabase = createServiceRoleClient(env);
   const code = c.req.param('code');
   const cors = corsHeaders(c.req.raw, env.allowedOrigins);
 
@@ -100,24 +111,24 @@ app.post('/polls/:code/session', async (c) => {
 // GET /voter-api/polls/:code/my-vote — only this credential's saved answer, or none.
 app.get('/polls/:code/my-vote', async (c) => {
   const env = loadEnv();
-  const supabase = createAnonClient(env);
+  const supabase = createServiceRoleClient(env);
   const code = c.req.param('code');
   const cors = corsHeaders(c.req.raw, env.allowedOrigins);
 
   const voterKeyHash = await requireVoterKeyHash(c, code);
-  if (!voterKeyHash) return jsonResponse({ hasVote: false }, {}, cors);
+  if (!voterKeyHash) return jsonResponse(null, {}, cors);
 
   const { data, error } = await supabase.rpc('get_my_vote', { p_public_code: code, p_voter_key_hash: voterKeyHash });
   if (error) throw fromPostgresError(error.message);
   const row = Array.isArray(data) ? data[0] : data;
-  if (!row) return jsonResponse({ hasVote: false }, {}, cors);
-  return jsonResponse({ hasVote: true, optionId: row.option_id, revision: row.revision }, {}, cors);
+  if (!row) return jsonResponse(null, {}, cors);
+  return jsonResponse({ optionId: row.option_id, revision: row.revision }, {}, cors);
 });
 
 // PUT /voter-api/polls/:code/my-vote — submit or change a vote.
 app.put('/polls/:code/my-vote', async (c) => {
   const env = loadEnv();
-  const supabase = createAnonClient(env);
+  const supabase = createServiceRoleClient(env);
   const code = c.req.param('code');
   const cors = corsHeaders(c.req.raw, env.allowedOrigins);
 
@@ -151,17 +162,22 @@ app.put('/polls/:code/my-vote', async (c) => {
   if (error) throw fromPostgresError(error.message);
   const row = Array.isArray(data) ? data[0] : data;
 
-  return jsonResponse(
-    { status: row.status, optionId: row.option_id, revision: row.revision },
-    {},
-    cors,
-  );
+  // 'conflict' is a successful DB call (no exception raised — see voting_transaction.sql) but
+  // an unsuccessful vote from the client's perspective: PRD §10.6 requires the current saved
+  // answer be returned so the client can ask the voter to reconfirm, never silently applied.
+  if (row.status === 'conflict') {
+    throw new ApiError('REVISION_CONFLICT', 'Your answer changed elsewhere. Reconfirm to change it.', {
+      current: row.option_id ? { optionId: row.option_id, revision: row.revision } : null,
+    });
+  }
+
+  return jsonResponse({ optionId: row.option_id, revision: row.revision }, {}, cors);
 });
 
 // GET /voter-api/polls/:code/results — eligibility enforced inside get_participant_results.
 app.get('/polls/:code/results', async (c) => {
   const env = loadEnv();
-  const supabase = createAnonClient(env);
+  const supabase = createServiceRoleClient(env);
   const code = c.req.param('code');
   const cors = corsHeaders(c.req.raw, env.allowedOrigins);
 
@@ -180,13 +196,26 @@ app.get('/polls/:code/results', async (c) => {
     p_voter_key_hash: voterKeyHash,
   });
   if (error) throw fromPostgresError(error.message);
-  return jsonResponse(data, {}, cors);
+  return jsonResponse(
+    {
+      options: (data.options ?? []).map((o: { id: string; percentage: number }) => ({
+        optionId: o.id,
+        percentage: o.percentage,
+      })),
+      status: data.status,
+      isFinal: data.is_final,
+      serverTime: data.server_time,
+      ...(data.status === 'pending' ? { pending: true } : {}),
+    },
+    {},
+    cors,
+  );
 });
 
 // POST /voter-api/polls/:code/report — abuse reporting, open to any link holder.
 app.post('/polls/:code/report', async (c) => {
   const env = loadEnv();
-  const supabase = createAnonClient(env);
+  const supabase = createServiceRoleClient(env);
   const code = c.req.param('code');
   const cors = corsHeaders(c.req.raw, env.allowedOrigins);
 
