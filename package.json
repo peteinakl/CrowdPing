@@ -1,0 +1,23 @@
+{
+  "name": "crowdping",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/web",
+    "e2e"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:proxy": "npx wrangler pages dev http://127.0.0.1:5173 --port 8788 --config apps/web/wrangler.toml",
+    "build:web": "npm run build --workspace apps/web",
+    "test:unit": "npm run test --workspace apps/web",
+    "test:e2e": "npm run test --workspace e2e",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:reset": "npx supabase db reset",
+    "supabase:test": "npx supabase test db"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
