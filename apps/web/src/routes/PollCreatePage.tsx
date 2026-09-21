@@ -7,12 +7,14 @@ import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
 import { ExpirySelector } from '../components/create/ExpirySelector';
 import { ResultsTimingSelector } from '../components/create/ResultsTimingSelector';
 import { MobilePreviewPane } from '../components/create/MobilePreviewPane';
+import { useToast } from '../components/common/Toast';
 import { apiClient } from '../lib/apiClient';
 import { QUESTION_MAX, validateChoiceList, validateQuestion } from '../lib/validation';
 import type { ResultsMode } from '../lib/types';
 
 export function PollCreatePage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [question, setQuestion] = useState('');
   const [choices, setChoices] = useState(['', '']);
   const [expiryDays, setExpiryDays] = useState(1);
@@ -37,6 +39,7 @@ export function PollCreatePage() {
         expiryDays,
         participantResultsMode: resultsMode,
       });
+      showToast("Draft saved — publish when you're ready.");
       navigate(`/polls/${id}`);
     } catch {
       setError('Could not save your draft. Please try again.');

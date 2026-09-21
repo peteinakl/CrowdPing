@@ -3,6 +3,7 @@ import * as RadioGroup from '@radix-ui/react-radio-group';
 import { RadioCard } from '../common/RadioCard';
 import { Button } from '../common/Button';
 import { LiveRegion } from '../common/LiveRegion';
+import { ConfettiBurst } from '../common/ConfettiBurst';
 import { apiClient, ApiClientError } from '../../lib/apiClient';
 import type { MyVote, PublicPoll } from '../../lib/types';
 
@@ -29,11 +30,13 @@ export function BallotForm({ code, poll, myVote, onVoted }: BallotFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [announcement, setAnnouncement] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   const isClosed = poll.status !== 'open';
 
   async function handleSubmit() {
     if (!selected) return;
+    const isFirstVote = myVote === null;
     setSubmitState('saving');
     setErrorMessage(null);
     try {
@@ -42,6 +45,8 @@ export function BallotForm({ code, poll, myVote, onVoted }: BallotFormProps) {
       setSubmitState('idle');
       setEditing(false);
       setAnnouncement('Vote recorded.');
+      // Only the first vote gets the celebration — a revote is routine, not an event.
+      if (isFirstVote) setCelebrating(true);
       onVoted(saved);
     } catch (err) {
       setSubmitState('failed');
@@ -59,87 +64,95 @@ export function BallotForm({ code, poll, myVote, onVoted }: BallotFormProps) {
     }
   }
 
+  const confetti = celebrating && <ConfettiBurst onDone={() => setCelebrating(false)} />;
+
   if (!editing && myVote) {
     const votedLabel = poll.options.find((o) => o.id === myVote.optionId)?.label ?? '';
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 rounded-[var(--radius-md)] bg-success-600/10 px-4 py-3.5 text-sm font-medium text-success-600">
-          <svg
-            aria-hidden
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="h-5 w-5 shrink-0"
-          >
-            <path
-              fillRule="evenodd"
-              d="M16.704 5.29a1 1 0 010 1.415l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 111.415-1.415L8.5 12.086l6.79-6.79a1 1 0 011.415 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>
-            Vote recorded: <span className="font-semibold">{votedLabel}</span>
-          </span>
+      <>
+        {confetti}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 rounded-[var(--radius-md)] bg-success-600/10 px-4 py-3.5 text-sm font-medium text-success-600">
+            <svg
+              aria-hidden
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-5 w-5 shrink-0"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.704 5.29a1 1 0 010 1.415l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 111.415-1.415L8.5 12.086l6.79-6.79a1 1 0 011.415 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>
+              Vote recorded: <span className="font-semibold">{votedLabel}</span>
+            </span>
+          </div>
+          {!isClosed && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSelected(myVote.optionId);
+                setEditing(true);
+              }}
+            >
+              Change my answer
+            </Button>
+          )}
+          <LiveRegion message={announcement} />
         </div>
-        {!isClosed && (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setSelected(myVote.optionId);
-              setEditing(true);
-            }}
-          >
-            Change my answer
-          </Button>
-        )}
-        <LiveRegion message={announcement} />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <RadioGroup.Root
-        value={selected}
-        onValueChange={setSelected}
-        className="flex flex-col gap-3"
-        aria-label={poll.question}
-        disabled={isClosed || submitState === 'saving'}
-      >
-        {poll.options.map((option) => (
-          <RadioCard key={option.id} value={option.id} label={option.label} />
-        ))}
-      </RadioGroup.Root>
-
-      {errorMessage && (
-        <p role="alert" className="text-sm font-medium text-red-700">
-          {errorMessage}
-        </p>
-      )}
-
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={handleSubmit}
-          disabled={!selected || isClosed || submitState === 'saving'}
-          size="lg"
-          className="w-full sm:w-auto"
+    <>
+      {confetti}
+      <div className="space-y-6">
+        <RadioGroup.Root
+          value={selected}
+          onValueChange={setSelected}
+          className="flex flex-col gap-3"
+          aria-label={poll.question}
+          disabled={isClosed || submitState === 'saving'}
         >
-          {submitState === 'saving' ? 'Saving…' : myVote ? 'Save change' : 'Submit vote'}
-        </Button>
-        {myVote && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSelected(myVote.optionId);
-              setEditing(false);
-              setErrorMessage(null);
-            }}
-          >
-            Cancel
-          </Button>
-        )}
-      </div>
+          {poll.options.map((option) => (
+            <RadioCard key={option.id} value={option.id} label={option.label} />
+          ))}
+        </RadioGroup.Root>
 
-      <LiveRegion message={announcement} assertive={submitState === 'failed'} />
-    </div>
+        {errorMessage && (
+          <p role="alert" className="text-sm font-medium text-red-700">
+            {errorMessage}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleSubmit}
+            disabled={!selected || isClosed || submitState === 'saving'}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            {submitState === 'saving' ? 'Saving…' : myVote ? 'Save change' : 'Submit vote'}
+          </Button>
+          {myVote && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelected(myVote.optionId);
+                setEditing(false);
+                setErrorMessage(null);
+              }}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+
+        <LiveRegion message={announcement} assertive={submitState === 'failed'} />
+      </div>
+    </>
   );
 }

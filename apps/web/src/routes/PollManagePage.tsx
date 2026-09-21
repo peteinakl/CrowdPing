@@ -4,6 +4,7 @@ import { AppShell } from '../components/common/AppShell';
 import { Card } from '../components/common/Card';
 import { Button, buttonClasses } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/Dialog';
+import { ConfettiBurst } from '../components/common/ConfettiBurst';
 import { PollStatusBadge } from '../components/dashboard/PollStatusBadge';
 import { LivePulse } from '../components/common/LivePulse';
 import { ChoiceListEditor } from '../components/create/ChoiceListEditor';
@@ -45,6 +46,7 @@ export function PollManagePage() {
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -121,6 +123,7 @@ export function PollManagePage() {
     try {
       await apiClient.organiser.publish(id as string);
       showToast('Live! Go project that code.');
+      setCelebrating(true);
       await load();
     } catch {
       showToast("Publish didn't go through. Try again?", 'error');
@@ -182,6 +185,7 @@ export function PollManagePage() {
 
   return (
     <AppShell>
+      {celebrating && <ConfettiBurst onDone={() => setCelebrating(false)} />}
       <div className="mb-6 flex items-center gap-3">
         <h1 className="font-display text-3xl font-bold tracking-tight text-ink-950">Manage poll</h1>
         <PollStatusBadge status={poll.status} />
