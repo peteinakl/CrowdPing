@@ -7,10 +7,19 @@ directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
-# Local dev only. Production values are set in the Cloudflare dashboard's project settings
-# (see docs/DEPLOYMENT.md) — never commit real upstream URLs or origins here beyond
-# the local defaults.
+# Top-level [vars] are local-dev-only defaults, used by `wrangler dev` and by `wrangler deploy`
+# when no --env is given. Real production values live in [env.production.vars] below instead of
+# the Cloudflare dashboard, since this project deploys straight from the CLI (see
+# docs/DEPLOYMENT.md) — deploy with `wrangler deploy --env production` to use them.
 [vars]
 SUPABASE_FUNCTIONS_BASE_URL = "http://127.0.0.1:54321/functions/v1"
 ALLOWED_APP_ORIGINS = "http://127.0.0.1:8788"
 APP_BASE_URL = "http://127.0.0.1:8788"
+
+[env.production]
+name = "crowdping-web"
+
+[env.production.vars]
+SUPABASE_FUNCTIONS_BASE_URL = "https://sjddczimxefzmvimjqwu.supabase.co/functions/v1"
+ALLOWED_APP_ORIGINS = "https://crowdping.aiinnovisory.com"
+APP_BASE_URL = "https://crowdping.aiinnovisory.com"

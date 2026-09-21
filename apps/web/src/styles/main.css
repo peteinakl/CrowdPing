@@ -73,30 +73,6 @@ body {
   }
 }
 
-/* The presentation join screen's ambient broadcast signature. The elements these animate are
-   already sized to 130% of the QR (see PresentationJoinView) — a large, unambiguous gap
-   outside the QR's quiet zone at every point in the cycle. Re-verify with a real decode test
-   after touching either the base size there or the scale range here. */
-@keyframes broadcast-ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1.45);
-    opacity: 0;
-  }
-}
-@keyframes broadcast-glow {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
 /* Dialog/Toast enter-exit — Radix drives these via data-state, so they only ever play on a
    real open/close transition, never on every re-render. Reduced-motion falls back to an
    instant show via the plain (non motion-safe) opacity keyframes below. */

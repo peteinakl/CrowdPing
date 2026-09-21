@@ -235,3 +235,22 @@ produces a second, separate Worker resource — wrangler itself warns about this
 ("Proceeding will likely produce unwanted results") when it detects the mismatch. Confirm which
 happened after the first successful deploy, and reconcile/rename in the dashboard if it's the
 latter.
+
+**Resolved**: checked directly via the Cloudflare API — this account never had a Pages project
+for CrowdPing at all (the earlier failing dashboard build was a different, non-Cloudflare-native
+CI platform running `wrangler` as its build/deploy command). `wrangler deploy` correctly targets
+a single Worker named `crowdping-web`, with the custom domain `crowdping.aiinnovisory.com` bound
+to it directly via `PUT /accounts/{account_id}/workers/domains`. Production config (real Supabase
+URL/keys, real origin) lives in `wrangler.toml`'s `[env.production]` block and
+`.env.production` (frontend build-time vars) — deploy with `npx wrangler deploy --env production`
+from `apps/web/`, not a bare `wrangler deploy` (which would use the local-dev `[vars]` instead).
+
+## Presentation join screen: removed the pulsing QR beacon
+
+The broadcast glow/ring animation around the QR on the presentation join screen (added during
+the earlier "real design flair" pass) was removed after live testing — at an actual event people
+need to scan the code quickly and accurately, and ambient motion around it competes with that
+rather than reinforcing it. `PresentationJoinView.tsx` now renders the QR plainly; the
+`broadcast-ring`/`broadcast-glow` keyframes were removed from `main.css` as dead code. The
+`ping-ring` keyframe (the smaller `LivePulse` motif used on `PollStatusBadge` and results
+headings) is unrelated and was kept.
