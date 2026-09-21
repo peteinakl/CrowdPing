@@ -15,9 +15,12 @@ const QR_RENDER_OPTIONS = {
   },
 };
 
-// public/brand/crowdping-logo.svg's real intrinsic size (1311×293) — used to size the overlay
-// to this specific wordmark-shaped (wide, not square) logo's actual proportions, not a guess.
-const LOGO_ASPECT = 293 / 1311;
+// public/brand/crowdping-logo.svg's real intrinsic size (763.905×150.899, updated 2026-09-22
+// — the earlier logo was 1311×293) — used to size the overlay to this specific wordmark-shaped
+// (wide, not square) logo's actual proportions, not a guess. Update this whenever the logo file
+// changes dimensions, and re-verify decodability (see LOGO_WIDTH_FRACTION below) — the backing
+// rect's exact size depends on it.
+const LOGO_ASPECT = 150.899 / 763.905;
 // Fraction of the QR's width the logo's own width occupies. The raw area-vs-error-budget math
 // looks safe well past this value, but real decoding (jsQR) is payload-dependent — module
 // placement varies per URL, so a fraction that decodes for one payload can fail for another at

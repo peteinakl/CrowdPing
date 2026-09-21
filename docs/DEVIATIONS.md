@@ -254,3 +254,18 @@ rather than reinforcing it. `PresentationJoinView.tsx` now renders the QR plainl
 `broadcast-ring`/`broadcast-glow` keyframes were removed from `main.css` as dead code. The
 `ping-ring` keyframe (the smaller `LivePulse` motif used on `PollStatusBadge` and results
 headings) is unrelated and was kept.
+
+## Brand: logo replaced with a full wordmark (2026-09-22)
+
+The product owner replaced the root `CrowdPing_Logo.svg` — the previous asset was an abstract
+cropped mark (viewBox `113 351 1311 293`); the new one is a full "CrowdPing" wordmark with an
+open-counter P and two vermilion pulse arcs (viewBox `-3.302 -13.235 763.905 150.899`, same
+`#151417`/`#FD2801` palette). Propagated to `apps/web/public/brand/crowdping-logo.svg` (verbatim
+copy, per the established workflow) and to `LOGO_ASPECT` in `apps/web/src/lib/qr.ts`, which is
+derived from the logo's real intrinsic dimensions rather than hardcoded independently.
+
+Re-ran the same real jsQR decode verification from the original logo-in-QR sizing work (not
+assumed safe just because the aspect ratio is similar) — 18/18 across both the live SVG render
+and the downloadable PNG path, including the two payloads that were the known-marginal cases for
+the previous logo at the current `LOGO_WIDTH_FRACTION` (0.25). No changes needed to that
+constant for this update.

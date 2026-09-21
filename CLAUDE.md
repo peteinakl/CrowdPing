@@ -47,7 +47,9 @@ RLS is default-deny on exposed tables. Owner-scoped access goes through the poll
 
 ## Brand asset handling
 
-`CrowdPing_Logo.svg` at the repo root is the brand source of truth (viewBox `113 351 1311 293`, fills `#151417` / `#FD2801`) — do not redraw, recolour, crop, or approximate it. Keep the root copy unchanged; when the frontend is scaffolded, copy it verbatim to `public/brand/crowdping-logo.svg` for serving. Never place it inside the generated QR code.
+`CrowdPing_Logo.svg` at the repo root is the brand source of truth (viewBox `-3.302 -13.235 763.905 150.899`, fills `#151417` / `#FD2801`) — do not redraw, recolour, crop, or approximate it. Keep the root copy unchanged; copy it verbatim to `apps/web/public/brand/crowdping-logo.svg` for serving whenever it's updated. If its intrinsic width/height change, also update `LOGO_ASPECT` in `apps/web/src/lib/qr.ts` and re-verify QR decodability (see that file's comments).
+
+The PRD's "never place the logo inside the QR code" rule was explicitly overridden by the product owner during the build — the logo is deliberately embedded, with the trade-off documented in `docs/DEVIATIONS.md`. Don't revert this without being asked.
 
 ## MCP configuration
 
