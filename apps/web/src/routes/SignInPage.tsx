@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Logo } from '../components/common/Logo';
+import { PrivacyLink } from '../components/common/PrivacyLink';
 import { signInWithGoogle } from '../hooks/useAuthSession';
 import { useReturnTo } from '../hooks/useReturnTo';
 
@@ -24,7 +25,7 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center gap-8 px-4">
       <Logo className="h-8 w-auto" />
       <Card className="w-full max-w-sm space-y-6">
         <div>
@@ -42,6 +43,7 @@ export function SignInPage() {
           </p>
         )}
       </Card>
+      <PrivacyLink className="absolute bottom-4 right-4" />
     </div>
   );
 }

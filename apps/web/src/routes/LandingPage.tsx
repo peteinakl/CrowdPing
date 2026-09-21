@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
 import { Logo } from '../components/common/Logo';
 import { buttonClasses } from '../components/common/Button';
+import { PrivacyLink } from '../components/common/PrivacyLink';
 
 const YourPollsLink = lazy(() =>
   import('../components/common/YourPollsLink').then((m) => ({ default: m.YourPollsLink })),
@@ -28,10 +29,11 @@ export function LandingPage() {
           Create a poll
         </Link>
       </main>
-      <footer className="px-4 py-6 text-center text-sm text-ink-300 sm:px-6">
+      <footer className="flex items-center justify-between px-4 py-6 text-sm text-ink-300 sm:px-6">
         <Link to="/sign-in" className="hover:text-ink-500">
           Organiser sign in
         </Link>
+        <PrivacyLink />
       </footer>
     </div>
   );

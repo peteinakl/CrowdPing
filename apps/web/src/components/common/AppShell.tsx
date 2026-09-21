@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Logo } from './Logo';
+import { PrivacyLink } from './PrivacyLink';
 import { signOut } from '../../hooks/useAuthSession';
 
 interface AppShellProps {
@@ -41,6 +42,11 @@ export function AppShell({ children, action }: AppShellProps) {
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+      {/* Hidden behind FormActionBar on pages that render one (Create, Manage-draft) — those
+          pages get their own copy via FormActionBar's own PrivacyLink instead. */}
+      <footer className="mx-auto max-w-5xl px-4 pb-6 text-right sm:px-6">
+        <PrivacyLink />
+      </footer>
     </div>
   );
 }

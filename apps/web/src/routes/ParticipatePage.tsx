@@ -7,6 +7,7 @@ import { ResultsBarChart } from '../components/results/ResultsBarChart';
 import { LastUpdatedIndicator } from '../components/results/LastUpdatedIndicator';
 import { StaleBadge } from '../components/results/StaleBadge';
 import { CreatePollInviteLink } from '../components/common/CreatePollInviteLink';
+import { PrivacyLink } from '../components/common/PrivacyLink';
 import { useVoterSession } from '../hooks/useVoterSession';
 import { useMyVote } from '../hooks/useMyVote';
 import { useResultsPolling } from '../hooks/useResultsPolling';
@@ -96,8 +97,9 @@ export function ParticipatePage() {
       <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col gap-8 px-4 py-10">
         <Logo className="h-7 w-auto" />
         {content}
-        <div className="mt-auto pt-8 text-center">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-4 pt-8">
           <CreatePollInviteLink />
+          <PrivacyLink />
         </div>
       </div>
     </div>

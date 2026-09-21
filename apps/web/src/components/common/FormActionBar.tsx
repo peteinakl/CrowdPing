@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PrivacyLink } from './PrivacyLink';
 
 interface FormActionBarProps {
   children: ReactNode;
@@ -20,6 +21,10 @@ export function FormActionBar({ children }: FormActionBarProps) {
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
         {children}
+        {/* This bar covers the whole viewport width, so AppShell's own footer copy of this
+            link is permanently hidden behind it on pages that render one — this is the copy
+            that's actually visible there. */}
+        <PrivacyLink className="ml-auto" />
       </div>
     </div>
   );
