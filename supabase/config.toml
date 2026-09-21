@@ -384,6 +384,16 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+[functions.voter-api]
+# No Supabase user JWT is required or expected — anonymous voters call this with only the
+# anon apikey. voter-api enforces its own signed-cookie-based identity per request.
+verify_jwt = false
+
+[functions.organiser-api]
+# Gateway-level requirement that SOME valid JWT is present (coarse check); the function body
+# and the SQL functions it calls additionally require auth.uid() to resolve to a real user.
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

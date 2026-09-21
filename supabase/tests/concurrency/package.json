@@ -1,0 +1,12 @@
+{
+  "name": "@crowdping/supabase-concurrency-tests",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node lock-ordering.test.js"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
