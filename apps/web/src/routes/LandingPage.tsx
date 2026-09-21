@@ -1,12 +1,20 @@
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
 import { Logo } from '../components/common/Logo';
 import { buttonClasses } from '../components/common/Button';
 
+const ReturningOrganiserNav = lazy(() =>
+  import('../components/common/ReturningOrganiserNav').then((m) => ({ default: m.ReturningOrganiserNav })),
+);
+
 export function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="px-4 py-6 sm:px-6">
+      <header className="flex items-center justify-between px-4 py-6 sm:px-6">
         <Logo className="h-8 w-auto" />
+        <Suspense fallback={null}>
+          <ReturningOrganiserNav />
+        </Suspense>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 text-center">
         <h1 className="max-w-xl font-display text-4xl font-bold leading-[1.05] tracking-tight text-ink-950 sm:text-5xl">
