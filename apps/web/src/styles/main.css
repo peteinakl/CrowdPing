@@ -73,20 +73,6 @@ body {
   }
 }
 
-/* ConfettiBurst — the two moments that earn a flourish: publishing a poll and a voter's first
-   vote. ConfettiBurst.tsx skips rendering entirely under reduced-motion rather than relying on
-   motion-safe: here, since this is a one-shot celebration, not persistent ambient motion. */
-@keyframes confetti-fall {
-  0% {
-    transform: translate(-50%, 0) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(calc(-50% + var(--tx)), var(--ty)) rotate(var(--rot));
-    opacity: 0;
-  }
-}
-
 /* Dialog/Toast enter-exit — Radix drives these via data-state, so they only ever play on a
    real open/close transition, never on every re-render. Reduced-motion falls back to an
    instant show via the plain (non motion-safe) opacity keyframes below. */
