@@ -111,6 +111,29 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   });
 }
 
+// Format-valid Crockford base32 code that is never issued in practice (80-bit random codes).
+const KEEPALIVE_POLL_CODE = '0000000000000000';
+
+/**
+ * Keeps the free-tier Supabase project from pausing after a week of inactivity. Hits the public
+ * poll lookup for a nonexistent code: one read-only `get_public_poll` query (STABLE function),
+ * no cookie minted, no rate-limit row, no poll/vote writes. A 404 POLL_NOT_FOUND means the edge
+ * function and database both answered — that's the healthy outcome.
+ */
+async function keepSupabaseAlive(env: Env): Promise<void> {
+  const base = env.SUPABASE_FUNCTIONS_BASE_URL.replace(/\/+$/, '');
+  const start = Date.now();
+  try {
+    const res = await fetch(`${base}/voter-api/polls/${KEEPALIVE_POLL_CODE}`, {
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    });
+    const healthy = res.status === 404 || res.ok;
+    (healthy ? console.log : console.error)(`keepalive -> ${res.status} ${Date.now() - start}ms`);
+  } catch (err) {
+    console.error(`keepalive -> upstream_error ${Date.now() - start}ms ${err instanceof Error ? err.name : ''}`);
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -119,5 +142,10 @@ export default {
     }
     // Static assets + SPA fallback (see [assets].not_found_handling in wrangler.toml).
     return env.ASSETS.fetch(request);
+  },
+
+  // Cron trigger (see [triggers] in wrangler.toml).
+  async scheduled(_controller: unknown, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
+    ctx.waitUntil(keepSupabaseAlive(env));
   },
 };

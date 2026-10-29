@@ -7,6 +7,11 @@ directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
+# Read-only ping every 4 hours so the free-tier Supabase project never hits its inactivity pause.
+# See keepSupabaseAlive() in worker.ts. Inherited by [env.production].
+[triggers]
+crons = ["17 */4 * * *"]
+
 # Top-level [vars] are local-dev-only defaults, used by `wrangler dev` and by `wrangler deploy`
 # when no --env is given. Real production values live in [env.production.vars] below instead of
 # the Cloudflare dashboard, since this project deploys straight from the CLI (see
